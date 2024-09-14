@@ -1,4 +1,3 @@
-// クイズデータ
 const beginnerQuestions = [
     {
         question: "GDPとは何の略ですか？",
@@ -7,16 +6,10 @@ const beginnerQuestions = [
         explanation: "GDP（Gross Domestic Product）は、国内総生産の略で、一定期間内に国内で生産された財・サービスの総価値を指します。"
     },
     {
-        question: "世の中のモノやサービスの価格（物価）が全体的に継続して上昇することを何と言いますか？",
+        question: "需要と供給のバランスが崩れた状態で発生するのはどちらですか？",
         choices: ["デフレーション", "インフレーション", "スタグフレーション"],
         answer: "インフレーション",
         explanation: "インフレーションは、需要が供給を上回り、物価が持続的に上昇する現象です。"
-    },
-    {
-        question: "貨幣の流通量が減少し、物価が継続的に下落する現象を何といいますか？",
-        choices: ["インフレーション", "デフレーション", "ハイパーインフレーション"],
-        answer: "デフレーション",
-        explanation: "デフレーションは、貨幣の流通量が減少し、物価が持続的に下落する現象です。"
     }
 ];
 
@@ -29,7 +22,7 @@ const intermediateQuestions = [
     },
     {
         question: "フィリップス曲線とは何を示しているものですか？",
-        choices: ["失業率とインフレーション率の逆相関", "利子率と投資の関係", "消費と貯蓄のバランス"],
+        choices: ["失業率とインフレーション率のトレードオフ", "利子率と投資の関係", "消費と貯蓄のバランス"],
         answer: "失業率とインフレーション率のトレードオフ",
         explanation: "フィリップス曲線は、失業率とインフレーション率が逆相関の関係にあることを示しています。"
     }
@@ -38,13 +31,11 @@ const intermediateQuestions = [
 const advancedQuestions = [
     {
         question: "クラウディングアウト効果とは何ですか？",
-        choices: ["政府の借入が民間の資金調達を押し出し、民間の投資が減少することを指す。"],
         answer: "政府の借入が民間の資金調達を押し出し、民間の投資が減少することを指す。",
         explanation: "クラウディングアウト効果は、政府が借入を増やすことで、民間の資金調達を阻害し、民間投資が減少する現象です。"
     },
     {
         question: "「信用創造」のプロセスについて説明してください。",
-        choices: ["銀行が預金の一部を貸し出すことで、預金が増加し経済全体で貨幣供給が増えるプロセス。"],
         answer: "銀行が預金の一部を貸し出すことで、預金が増加し経済全体で貨幣供給が増えるプロセス。",
         explanation: "信用創造とは、銀行が預金の一部を貸し出すことで、新たな預金を生み出し、経済全体の貨幣供給量が増加するプロセスです。"
     }
@@ -83,15 +74,25 @@ function showQuestion() {
     questionElement.textContent = questionData.question;
     choicesElement.innerHTML = "";
 
-    questionData.choices.forEach(choice => {
-        const button = document.createElement("button");
-        button.textContent = choice;
-        button.onclick = () => selectAnswer(choice);
-        choicesElement.appendChild(button);
-    });
+    if (currentQuestions === advancedQuestions) {
+        // 上級クイズでは記入式に変更
+        const inputField = document.createElement("input");
+        inputField.setAttribute("type", "text");
+        inputField.setAttribute("id", "writtenAnswer");
+        inputField.setAttribute("placeholder", "答えを記入してください");
+        choicesElement.appendChild(inputField);
+    } else {
+        // 初級・中級クイズは選択式
+        questionData.choices.forEach(choice => {
+            const button = document.createElement("button");
+            button.textContent = choice;
+            button.onclick = () => selectAnswer(choice);
+            choicesElement.appendChild(button);
+        });
+    }
 }
 
-// 答えを選択
+// 答えを選択（選択式の場合）
 function selectAnswer(choice) {
     const questionData = currentQuestions[currentQuestionIndex];
     const isCorrect = choice === questionData.answer;
@@ -103,6 +104,34 @@ function selectAnswer(choice) {
     results.push({
         question: questionData.question,
         selectedAnswer: choice,
+        correctAnswer: questionData.answer,
+        explanation: questionData.explanation,
+        isCorrect: isCorrect
+    });
+
+    currentQuestionIndex++;
+
+    if (currentQuestionIndex < currentQuestions.length) {
+        showQuestion();
+    } else {
+        showResult();
+    }
+}
+
+// 答えを記入（上級の場合）
+function submitWrittenAnswer() {
+    const inputField = document.getElementById("writtenAnswer");
+    const userAnswer = inputField.value.trim();
+    const questionData = currentQuestions[currentQuestionIndex];
+    const isCorrect = userAnswer === questionData.answer;
+
+    if (isCorrect) {
+        score++;
+    }
+
+    results.push({
+        question: questionData.question,
+        selectedAnswer: userAnswer,
         correctAnswer: questionData.answer,
         explanation: questionData.explanation,
         isCorrect: isCorrect
@@ -148,10 +177,14 @@ function showResult() {
 
 // 次の質問へ進む
 function nextQuestion() {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < currentQuestions.length) {
-        showQuestion();
+    if (currentQuestions === advancedQuestions) {
+        submitWrittenAnswer();  // 上級では記入式の答えを処理
     } else {
-        showResult();
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuestions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
     }
 }
